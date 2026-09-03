@@ -19,9 +19,9 @@ export default function StudentDashboardPage() {
     Promise.all([
       studentApi.getProfile().catch(() => null),
       electionApi.getCurrent().catch(() => null),
-    ]).then(([profileData, electionData]) => {
-      setProfile(profileData);
-      setElection(electionData);
+    ]).then(([profileData, electionData]: [any, any]) => {
+      setProfile(profileData?.data || profileData || null);
+      setElection(electionData?.data || electionData || null);
       setLoading(false);
     });
   }, []);

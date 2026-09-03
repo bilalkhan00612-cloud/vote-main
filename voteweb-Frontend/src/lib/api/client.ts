@@ -4,11 +4,6 @@
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vote-main-production.up.railway.app/api/v1";
 
-export interface ApiResponse<T = unknown> {
-  data?: T;
-  error?: string;
-}
-
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -40,71 +35,185 @@ class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...((options.headers as Record<string, string>) || {}),
-      };
+  ): Promise<T> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...((options.headers as Record<string, string>) || {}),
+    };
 
-      // Add CSRF token for state-changing requests
-      if (options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method)) {
-        const csrf = await this.getCsrfToken();
-        if (csrf) {
-          headers['X-CSRF-Token'] = csrf;
-        }
+    // Add CSRF token for state-changing requests
+    if (options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method)) {
+      const csrf = await this.getCsrfToken();
+      if (csrf) {
+        headers['X-CSRF-Token'] = csrf;
       }
-
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        ...options,
-        headers,
-        credentials: 'include',
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        return {
-          error: data.error?.message || data.error || `HTTP ${res.status}`,
-        };
-      }
-
-      return { data: data.data || data };
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Network error';
-      console.error(`API Error [${endpoint}]:`, message);
-      return { error: message };
     }
+
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new ApiError(data.error?.message || data.error || `HTTP ${res.status}`, res.status);
+    }
+
+    return data.data || data;
   }
 
-  // Public HTTP methods
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'GET' });
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint);
   }
 
-  async post<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, body?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, body?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+  async patch<T>(endpoint: string, body?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: body ? JSON.stringify(body) : undefined,
     });
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+  async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' });
+  }
+
+  // Auth
+  async login(identifier: string, password: string, role: string) {
+    return this.post('/auth/login', { userIdentifier: identifier, password, role });
+  }
+
+  async registerInstant(data: {
+    email: string;
+    username: string;
+    fullName: string;
+    mobileNumber: string;
+    enrollmentNumber: string;
+    password: string;
+    confirmPassword: string;
+    role: string;
+  }) {
+    return this.post('/auth/register/instant', data);
+  }
+
+  async getMe() {
+    return this.get('/auth/me');
+  }
+
+  async logout() {
+    return this.post('/auth/logout', {});
+  }
+
+  // Students
+  async getStudentProfile() {
+    return this.get('/students/profile');
+  }
+
+  async getActiveElections() {
+    return this.get('/elections/active');
+  }
+
+  // Admin
+  async getAdminDashboard() {
+    return this.get('/admin/dashboard');
+  }
+
+  async getAdminStudents() {
+    return this.get('/admin/students');
+  }
+
+  async getAdminElections() {
+    return this.get('/admin/elections');
+  }
+
+  async getAdminCandidates() {
+    return this.get('/admin/candidates');
+  }
+
+  async getAdminPositions() {
+    return this.get('/admin/positions');
+  }
+
+  async getAdminClubs() {
+    return this.get('/admin/clubs');
+  }
+
+  async getAdminAnnouncements() {
+    return this.get('/admin/announcements');
+  }
+
+  async getAdminReports() {
+    return this.get('/admin/reports');
+  }
+
+  async getAdminResults() {
+    return this.get('/admin/results');
+  }
+
+  // Candidates
+  async getCandidateApplication() {
+    return this.get('/candidate-application/my');
+  }
+
+  async submitCandidateApplication(data: unknown) {
+    return this.post('/candidate-application', data);
+  }
+
+  // Elections
+  async getElections() {
+    return this.get('/elections');
+  }
+
+  async getElectionPositions(electionId: number) {
+    return this.get(`/elections/${electionId}/positions`);
+  }
+
+  async castVote(electionId: number, positionId: number, candidateId: number) {
+    return this.post('/votes', { electionId, positionId, candidateId });
+  }
+
+  // Notifications
+  async getNotifications() {
+    return this.get('/notifications');
+  }
+
+  async markNotificationRead(id: number) {
+    return this.patch(`/notifications/${id}`, { isRead: true });
+  }
+
+  // Receipts
+  async getReceipt(hash: string) {
+    return this.get(`/receipts/${hash}`);
+  }
+
+  // Results
+  async getResults(electionId?: number) {
+    const endpoint = electionId ? `/results/${electionId}` : '/results';
+    return this.get(endpoint);
+  }
+
+  // Support
+  async createSupportRequest(data: unknown) {
+    return this.post('/support', data);
+  }
+
+  async getSupportRequests() {
+    return this.get('/support');
   }
 }
 
