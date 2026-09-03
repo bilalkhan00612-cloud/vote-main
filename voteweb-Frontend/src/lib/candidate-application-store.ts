@@ -49,7 +49,7 @@ export async function getApplication(candidateId: string): Promise<CandidateAppl
 export async function getApplicationByEmail(email: string): Promise<CandidateApplicationData | undefined> {
   try {
     const all = await candidateApi.getAll();
-    return all.find((a) => a.email.toLowerCase() === email.toLowerCase());
+    return all.find((a: CandidateApplicationData) => a.email.toLowerCase() === email.toLowerCase());
   } catch {
     return undefined;
   }

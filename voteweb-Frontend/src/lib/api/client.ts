@@ -4,9 +4,18 @@
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vote-main-production.up.railway.app/api/v1";
 
-interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
 }
 
 class ApiClient {
@@ -28,7 +37,7 @@ class ApiClient {
     }
   }
 
-  async request<T>(
+  private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
@@ -49,7 +58,7 @@ class ApiClient {
       const res = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers,
-        credentials: 'include', // Include session cookies
+        credentials: 'include',
       });
 
       const data = await res.json().catch(() => ({}));
@@ -61,168 +70,41 @@ class ApiClient {
       }
 
       return { data: data.data || data };
-    } catch (error: any) {
-      console.error(`API Error [${endpoint}]:`, error);
-      return {
-        error: error.message || 'Network error',
-      };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Network error';
+      console.error(`API Error [${endpoint}]:`, message);
+      return { error: message };
     }
   }
 
-  // Auth
-  async login(identifier: string, password: string, role: string = 'STUDENT') {
-    return this.request('/auth/login', {
+  // Public HTTP methods
+  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET' });
+  }
+
+  async post<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ userIdentifier: identifier, password, role }),
+      body: body ? JSON.stringify(body) : undefined,
     });
   }
 
-  async register(data: {
-    email: string;
-    username: string;
-    fullName: string;
-    mobileNumber: string;
-    enrollmentNumber: string;
-    password: string;
-    confirmPassword: string;
-    role: string;
-  }) {
-    return this.request('/auth/register/instant', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async sendLoginOtp(email: string, role: string = 'STUDENT') {
-    return this.request('/auth/otp/send-login', {
-      method: 'POST',
-      body: JSON.stringify({ email, role }),
-    });
-  }
-
-  async verifyOtp(email: string, otp: string, role: string = 'STUDENT') {
-    return this.request('/auth/otp/verify-login', {
-      method: 'POST',
-      body: JSON.stringify({ email, otp, role }),
-    });
-  }
-
-  async getMe() {
-    return this.request('/auth/me');
-  }
-
-  async logout() {
-    return this.request('/auth/logout', { method: 'POST' });
-  }
-
-  // Elections
-  async getActiveElections() {
-    return this.request('/elections/active');
-  }
-
-  async getElection(id: number) {
-    return this.request(`/elections/${id}`);
-  }
-
-  // Positions & Candidates
-  async getPositions(electionId?: number) {
-    const endpoint = electionId ? `/positions?electionId=${electionId}` : '/positions';
-    return this.request(endpoint);
-  }
-
-  async getCandidates(positionId?: number) {
-    const endpoint = positionId ? `/positions/${positionId}/candidates` : '/candidates';
-    return this.request(endpoint);
-  }
-
-  async getCandidate(id: number) {
-    return this.request(`/candidates/${id}`);
-  }
-
-  // Voting
-  async getAuthorization() {
-    return this.request('/students/authorization');
-  }
-
-  async castVote(electionId: number, votes: { positionId: number; candidateId: number }[]) {
-    return this.request('/votes', {
-      method: 'POST',
-      body: JSON.stringify({ electionId, votes }),
-    });
-  }
-
-  async getReceipt(voteId: number) {
-    return this.request(`/receipts/${voteId}`);
-  }
-
-  // Results
-  async getResults(electionId?: number) {
-    const endpoint = electionId ? `/results?electionId=${electionId}` : '/results';
-    return this.request(endpoint);
-  }
-
-  // Student Profile
-  async getProfile() {
-    return this.request('/students/me');
-  }
-
-  async updateProfile(data: any) {
-    return this.request('/students/me', {
+  async put<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: body ? JSON.stringify(body) : undefined,
     });
   }
 
-  // Notifications
-  async getNotifications() {
-    return this.request('/notifications');
+  async patch<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
   }
 
-  // Announcements
-  async getAnnouncements() {
-    return this.request('/announcements');
-  }
-
-  // Clubs
-  async getClubs() {
-    return this.request('/clubs');
-  }
-
-  // Admin endpoints
-  async getAdminDashboard() {
-    return this.request('/admin/dashboard');
-  }
-
-  async getAdminStudents() {
-    return this.request('/admin/students');
-  }
-
-  async getAdminElections() {
-    return this.request('/admin/elections');
-  }
-
-  async getAdminCandidates() {
-    return this.request('/admin/candidates');
-  }
-
-  async getAdminPositions() {
-    return this.request('/admin/positions');
-  }
-
-  async getAdminClubs() {
-    return this.request('/admin/clubs');
-  }
-
-  async getAdminAnnouncements() {
-    return this.request('/admin/announcements');
-  }
-
-  async getAdminReports() {
-    return this.request('/admin/reports');
-  }
-
-  async getAdminResults() {
-    return this.request('/admin/results');
+  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE' });
   }
 }
 
