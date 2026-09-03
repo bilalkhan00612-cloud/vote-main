@@ -45,7 +45,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ selectedRole, onSele
               className={cn(
                 "flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all duration-150 cursor-pointer text-center",
                 isActive
-                  ? "border-primary-600 bg-primary-50 shadow-[0_2px_12px_rgba(39,52,139,0.12)]"
+                  ? "border-primary-600 bg-primary-50 shadow-[0_2px_12px_rgba(248,0,0,0.12)]"
                   : "border-border bg-white hover:border-primary-300 hover:bg-primary-50/50"
               )}
             >

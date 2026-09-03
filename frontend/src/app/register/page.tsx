@@ -3,57 +3,116 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { UserPlus, ArrowLeft } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthHeader } from "@/components/auth/AuthHeader";
-import { ErrorMessage } from "@/components/auth/ErrorMessage";
-import { SuccessState } from "@/components/auth/SuccessState";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
-type RegisterState = "form" | "loading" | "success";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vote-main-production.up.railway.app/api/v1";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [pageState, setPageState] = useState<RegisterState>("form");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [studentId, setStudentId] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState({
+    email: "",
+    username: "",
+    fullName: "",
+    mobileNumber: "",
+    enrollmentNumber: "",
+    password: "",
+    confirmPassword: "",
+    role: "STUDENT",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-  const validate = (): boolean => {
-    const e: Record<string, string> = {};
-    if (!name.trim()) e.name = "Full name is required";
-    if (!email.trim()) e.email = "College email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Enter a valid email";
-    if (!studentId.trim()) e.studentId = "Student ID is required";
-    if (!password) e.password = "Password is required";
-    else if (password.length < 8) e.password = "Password must be at least 8 characters";
-    if (password !== confirmPassword) e.confirmPassword = "Passwords do not match";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    if (!validate()) return;
-    setPageState("loading");
-    setTimeout(() => {
-      setPageState("success");
-    }, 2000);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (!formData.email || !formData.username || !formData.fullName || !formData.enrollmentNumber) {
+      setError("All fields are required");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Get CSRF token
+      const csrfRes = await fetch(`${API_BASE}/auth/csrf`, {
+        credentials: "include",
+      });
+      const csrfData = await csrfRes.json();
+      const csrfToken = csrfData.data?.csrfToken || "";
+
+      // Register account
+      const res = await fetch(`${API_BASE}/auth/register/instant`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: formData.email,
+          username: formData.username,
+          fullName: formData.fullName,
+          mobileNumber: formData.mobileNumber.replace(/\D/g, "").slice(-10),
+          enrollmentNumber: formData.enrollmentNumber,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          role: formData.role,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error?.message || data.error || "Registration failed");
+        setIsLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || "Network error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (pageState === "success") {
+  if (success) {
     return (
       <AuthLayout>
         <AuthCard>
-          <SuccessState
-            title="Registration submitted"
-            message="Your account is pending admin approval. You will receive an email once approved."
-            actionLabel="Go to Login"
-            onAction={() => router.push("/login")}
-          />
+          <div className="text-center py-8">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+              <UserPlus className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Account Created!</h2>
+            <p className="text-gray-600 mb-4">Your account has been created successfully.</p>
+            <p className="text-sm text-gray-500">Redirecting to login...</p>
+          </div>
         </AuthCard>
       </AuthLayout>
     );
@@ -73,87 +132,98 @@ export default function RegisterPage() {
             />
           </div>
 
-          {errors.general && <ErrorMessage message={errors.general} />}
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">Full Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              {errors.name && <p className="text-xs text-error-600 mt-1">{errors.name}</p>}
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+              {error}
             </div>
+          )}
 
-            <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">College Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@college.edu"
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              {errors.email && <p className="text-xs text-error-600 mt-1">{errors.email}</p>}
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              placeholder="your.email@example.com"
+              required
+            />
 
-            <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">Student ID</label>
-              <input
-                type="text"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-                placeholder="e.g. DBIT2025XXXX"
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
-              />
-              {errors.studentId && <p className="text-xs text-error-600 mt-1">{errors.studentId}</p>}
-            </div>
+            <Input
+              label="Username"
+              type="text"
+              value={formData.username}
+              onChange={(e) => handleChange("username", e.target.value)}
+              placeholder="Choose a username"
+              required
+            />
 
-            <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 8 characters"
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              {errors.password && <p className="text-xs text-error-600 mt-1">{errors.password}</p>}
-            </div>
+            <Input
+              label="Full Name"
+              type="text"
+              value={formData.fullName}
+              onChange={(e) => handleChange("fullName", e.target.value)}
+              placeholder="Your full name"
+              required
+            />
 
-            <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">Confirm Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              {errors.confirmPassword && <p className="text-xs text-error-600 mt-1">{errors.confirmPassword}</p>}
-            </div>
-          </div>
+            <Input
+              label="Mobile Number"
+              type="tel"
+              value={formData.mobileNumber}
+              onChange={(e) => handleChange("mobileNumber", e.target.value)}
+              placeholder="+91 XXXXXXXXXX"
+            />
 
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            onClick={handleSubmit}
-            isLoading={pageState === "loading"}
-            disabled={pageState === "loading"}
-          >
-            Create Account
-          </Button>
+            <Input
+              label="Enrollment Number"
+              type="text"
+              value={formData.enrollmentNumber}
+              onChange={(e) => handleChange("enrollmentNumber", e.target.value)}
+              placeholder="Your enrollment number"
+              required
+            />
 
-          <div className="text-center">
-            <Link href="/login" className="text-sm text-primary-600 hover:text-primary-500 font-medium inline-flex items-center gap-1.5">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Login
+            <Input
+              label="Password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleChange("password", e.target.value)}
+              placeholder="Min 8 characters"
+              required
+            />
+
+            <Input
+              label="Confirm Password"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleChange("confirmPassword", e.target.value)}
+              placeholder="Re-enter password"
+              required
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating Account...
+                </span>
+              ) : (
+                "Create Account"
+              )}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              Sign in
             </Link>
-          </div>
+          </p>
         </div>
       </AuthCard>
     </AuthLayout>

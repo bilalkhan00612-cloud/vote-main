@@ -23,7 +23,7 @@ export const CandidateNavbar: React.FC<CandidateNavbarProps> = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <header className="h-16 bg-white dark:bg-[#1C1F33] border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-[0_2px_8px_rgba(32,39,92,0.04)]">
+    <header className="h-16 bg-white dark:bg-[#252540] border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-[0_2px_8px_rgba(32,39,92,0.04)]">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMenu}
@@ -74,12 +74,12 @@ export const CandidateNavbar: React.FC<CandidateNavbarProps> = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setDropdownOpen(false)}
               />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1C1F33] rounded-xl border border-border shadow-lg z-50 py-1">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#252540] rounded-xl border border-border shadow-lg z-50 py-1">
                 <div className="px-4 py-3 border-b border-border">
                   <p className="text-sm font-semibold text-text-primary">
                     {candidateName}
                   </p>
-                  <p className="text-xs text-text-muted">{candidateId}</p>
+                  <p className="text-xs text-text-muted">{candidateId || "No ID yet"}</p>
                   <span className="inline-block mt-1 text-[10px] font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
                     Candidate Account
                   </span>

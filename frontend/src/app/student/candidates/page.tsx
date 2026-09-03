@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Scale, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   getApprovedCandidatesAsCandidateList,
 } from "@/lib/candidate-application-store";
+import type { Candidate } from "@/lib/candidate-data";
 
 import { CandidateGrid } from "@/components/candidate/CandidateGrid";
 import { CandidateSearch } from "@/components/candidate/CandidateSearch";
@@ -22,6 +23,10 @@ import { ErrorState } from "@/components/ui/ErrorState";
 export default function CandidatePage() {
   const router = useRouter();
 
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     position: "all",
@@ -32,7 +37,18 @@ export default function CandidatePage() {
 
   const [comparedIds, setComparedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getApprovedCandidatesAsCandidateList()
+      .then((data) => {
+        setCandidates(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Failed to load candidates. Please try again.");
+        setLoading(false);
+      });
+  }, []);
 
   const toggleCompare = (id: string) => {
     setComparedIds((prev) => {
@@ -56,7 +72,7 @@ export default function CandidatePage() {
   const clearSelect = () => setSelectedIds(new Set());
 
   const filteredCandidates = useMemo(() => {
-    let results = getApprovedCandidatesAsCandidateList();
+    let results = [...candidates];
 
     if (searchQuery.trim()) {
       const lower = searchQuery.toLowerCase();
@@ -88,7 +104,17 @@ export default function CandidatePage() {
     }
 
     return results;
-  }, [searchQuery, filters, sortBy]);
+  }, [candidates, searchQuery, filters, sortBy]);
+
+  if (loading) {
+    return (
+      <StudentLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </StudentLayout>
+    );
+  }
 
   return (
     <StudentLayout>
@@ -97,7 +123,14 @@ export default function CandidatePage() {
           <ErrorState
             title="Something went wrong"
             message={error}
-            onRetry={() => setError(null)}
+            onRetry={() => {
+              setLoading(true);
+              setError(null);
+              getApprovedCandidatesAsCandidateList()
+                .then(setCandidates)
+                .catch(() => setError("Failed to load candidates."))
+                .finally(() => setLoading(false));
+            }}
           />
         </div>
       )}
@@ -196,7 +229,7 @@ export default function CandidatePage() {
           ) : (
             <EmptyState
               title="No Candidates Found"
-              description="Try changing your search or filters."
+              description="No approved candidates yet. Check back after elections open."
               action={
                 <Button
                   variant="secondary"

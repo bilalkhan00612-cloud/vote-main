@@ -42,7 +42,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose, customSid
       {/* Drawer content */}
       <div
         className={cn(
-          "absolute top-0 left-0 bottom-0 w-72 bg-white dark:bg-[#1C1F33] shadow-[0_20px_40px_rgba(32,39,92,0.2)] transform transition-transform duration-300 ease-in-out flex flex-col z-50 rounded-tr-2xl rounded-br-2xl",
+          "absolute top-0 left-0 bottom-0 w-72 bg-white dark:bg-[#252540] shadow-[0_20px_40px_rgba(32,39,92,0.2)] transform transition-transform duration-300 ease-in-out flex flex-col z-50 rounded-tr-2xl rounded-br-2xl",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

@@ -157,11 +157,11 @@ export default function CandidateApplyPage() {
     else if (step === 2) setStep(1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep3()) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      submitApplication({
+    try {
+      await submitApplication({
         name: formData.name.trim(),
         enrollmentNumber: formData.enrollmentNumber.trim(),
         department: formData.department,
@@ -174,9 +174,12 @@ export default function CandidateApplyPage() {
         bio: formData.bio.trim(),
         manifesto: formData.manifesto.trim(),
       });
-      setIsSubmitting(false);
       setShowSuccess(true);
-    }, 1500);
+    } catch (err) {
+      setErrors({ general: "Failed to submit application. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (showSuccess) {

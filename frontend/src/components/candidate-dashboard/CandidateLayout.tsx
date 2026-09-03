@@ -5,7 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { CandidateSidebar } from "./CandidateSidebar";
 import { CandidateNavbar } from "./CandidateNavbar";
 import { MobileNav } from "@/components/layout/MobileNav";
-import { MOCK_CANDIDATE_PROFILE } from "@/lib/candidate-dashboard-data";
+import { getAuthCookie } from "@/lib/mock-auth";
+import { getApplicationByEmail } from "@/lib/candidate-application-store";
 import type { ApplicationStatus } from "@/lib/candidate-dashboard-data";
 
 export interface CandidateLayoutProps {
@@ -37,18 +38,42 @@ function canAccessRoute(pathname: string, status: ApplicationStatus): boolean {
 
 export const CandidateLayout: React.FC<CandidateLayoutProps> = ({
   children,
-  candidateName = "Aarav Sharma",
-  candidateId = "CAN-001",
+  candidateName,
+  candidateId,
 }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [status, setStatus] = useState<ApplicationStatus>("approved");
   const [checking, setChecking] = useState(true);
+  const [userName, setUserName] = useState(candidateName || "Candidate");
+  const [userId, setUserId] = useState(candidateId || "");
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    const defaultStatus = MOCK_CANDIDATE_PROFILE.applicationStatus;
-    let currentStatus: ApplicationStatus = defaultStatus;
+    const auth = getAuthCookie();
+    let foundName = false;
+    let foundId = false;
+
+    if (auth?.email) {
+      getApplicationByEmail(auth.email).then((app) => {
+        if (app) {
+          setUserName(app.name);
+          setUserId(app.id);
+          setStatus(app.status);
+          foundName = true;
+          foundId = true;
+        }
+      });
+    }
+
+    if (!foundName) {
+      setUserName("Candidate");
+    }
+    if (!foundId) {
+      setUserId("");
+    }
+
+    let currentStatus: ApplicationStatus = "draft";
 
     try {
       const stored = localStorage.getItem("campusvote_application_status");
@@ -95,8 +120,8 @@ export const CandidateLayout: React.FC<CandidateLayoutProps> = ({
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <CandidateNavbar
           onToggleMenu={() => setMobileNavOpen((prev) => !prev)}
-          candidateName={candidateName}
-          candidateId={candidateId}
+          candidateName={userName}
+          candidateId={userId}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}

@@ -54,6 +54,17 @@ export function clearAuthCookie() {
   }
 }
 
+export function getAuthCookie(): { role: string; name: string; email: string } | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/campusvote_auth=([^;]+)/);
+  if (!match) return null;
+  try {
+    return JSON.parse(decodeURIComponent(match[1]));
+  } catch {
+    return null;
+  }
+}
+
 export function validateEmail(email: string, role: UserRole): string | null {
   if (!email.trim()) {
     switch (role) {

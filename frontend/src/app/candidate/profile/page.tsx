@@ -5,11 +5,11 @@ import { CandidateLayout } from "@/components/candidate-dashboard/CandidateLayou
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { MOCK_CANDIDATE_PROFILE } from "@/lib/candidate-dashboard-data";
 import type { ApplicationStatus } from "@/lib/candidate-dashboard-data";
+import { useCandidateApplication } from "@/hooks/useCandidateApplication";
 import { Lock, Camera } from "lucide-react";
 
-const STATUS_MAP: Record<ApplicationStatus, { label: string; variant: "default" | "success" | "warning" | "error" | "info" | "neutral"; description: string }> = {
+const STATUS_MAP: Record<string, { label: string; variant: "default" | "success" | "warning" | "error" | "info" | "neutral"; description: string }> = {
   draft: { label: "Draft", variant: "neutral", description: "Your profile is in draft. Submit it for review." },
   submitted: { label: "Submitted", variant: "info", description: "Your profile has been submitted and is awaiting review." },
   under_review: { label: "Under Review", variant: "warning", description: "Election administration is reviewing your profile." },
@@ -19,21 +19,52 @@ const STATUS_MAP: Record<ApplicationStatus, { label: string; variant: "default" 
 };
 
 export default function CandidateProfilePage() {
-  const profile = MOCK_CANDIDATE_PROFILE;
-  const statusInfo = STATUS_MAP[profile.applicationStatus];
-  const isApproved = profile.applicationStatus === "approved";
+  const { application } = useCandidateApplication();
+  const app = application;
+  const profile = app ? {
+    name: app.name,
+    id: app.id,
+    enrollmentNumber: app.enrollmentNumber,
+    position: app.position,
+    department: app.department,
+    year: app.year,
+    section: app.section,
+    bio: app.bio,
+    status: app.status,
+    photo: app.photo,
+    email: app.email,
+    phone: app.phone,
+    campaignLogo: null,
+  } : {
+    name: "",
+    id: "",
+    enrollmentNumber: "",
+    position: "",
+    department: "",
+    year: "",
+    section: "",
+    bio: "",
+    status: "draft" as ApplicationStatus,
+    photo: null,
+    email: "",
+    phone: "",
+    campaignLogo: null,
+  };
+  const statusInfo = STATUS_MAP[profile.status || "draft"];
+  const isApproved = profile.status === "approved";
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    biography: profile.biography,
+    biography: profile?.bio || "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const initials = profile.name
+  const initials = (profile?.name || "C")
     .split(" ")
     .map((n) => n[0])
     .join("")
-    .toUpperCase();
+    .toUpperCase()
+    .slice(0, 2);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -56,15 +87,15 @@ export default function CandidateProfilePage() {
   };
 
   const handleCancel = () => {
-    setFormData({ biography: profile.biography });
+    setFormData({ biography: profile?.bio || "" });
     setErrors({});
     setIsEditing(false);
   };
 
   return (
     <CandidateLayout
-      candidateName={profile.name}
-      candidateId={profile.id}
+      candidateName={profile?.name || "Candidate"}
+      candidateId={profile?.id || ""}
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -230,7 +261,7 @@ export default function CandidateProfilePage() {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-sm font-medium text-text-secondary mb-1">Biography</h3>
-                  <p className="text-sm text-text-primary leading-relaxed">{profile.biography}</p>
+                  <p className="text-sm text-text-primary leading-relaxed">{profile?.bio || "No biography submitted."}</p>
                 </div>
 
                 <div className="space-y-3">

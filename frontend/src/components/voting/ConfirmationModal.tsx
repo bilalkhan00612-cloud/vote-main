@@ -25,7 +25,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onBack} />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-[#1C1F33] rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+      <div className="relative bg-white dark:bg-[#252540] rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
             <AlertTriangle className="w-5 h-5 text-warning" />

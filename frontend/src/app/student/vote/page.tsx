@@ -18,23 +18,30 @@ import {
   AlreadyVotedState,
 } from "@/components/voting/VotingStates";
 import { VotingProvider, useVoting } from "@/components/voting/VotingContext";
-import { MOCK_VOTING_ELECTION, type VotingElection } from "@/lib/election-voting-data";
 import { getApprovedCandidatesAsVotingPositions } from "@/lib/candidate-application-store";
+import type { VotingPosition } from "@/lib/election-voting-data";
 import { AlertTriangle } from "lucide-react";
 
 const STEPS = ["Select Candidates", "Review Ballot", "Confirm Vote"];
 
 function VotePageInner() {
   const router = useRouter();
-  const positions = getApprovedCandidatesAsVotingPositions();
-  const election: VotingElection = { ...MOCK_VOTING_ELECTION, positions };
   const { selections, setCandidate, setAbstain, getSelection } = useVoting();
 
+  const [positions, setPositions] = useState<VotingPosition[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPosition, setCurrentPosition] = useState(0);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
-  const currentPositionData = election.positions[currentPosition];
+  useEffect(() => {
+    getApprovedCandidatesAsVotingPositions()
+      .then(setPositions)
+      .catch(() => setPositions([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const currentPositionData = positions[currentPosition];
   const currentSelection = getSelection(currentPositionData?.id);
   const hasSelection =
     currentSelection?.candidateId !== undefined &&
@@ -60,12 +67,12 @@ function VotePageInner() {
   const handleNext = useCallback(() => {
     if (!hasSelection && currentSelection?.candidateId === undefined) return;
 
-    if (currentPosition < election.positions.length - 1) {
+    if (currentPosition < positions.length - 1) {
       setCurrentPosition((prev) => prev + 1);
     } else {
       router.push("/student/vote/review");
     }
-  }, [currentPosition, election.positions.length, hasSelection, currentSelection?.candidateId, router]);
+  }, [currentPosition, positions.length, hasSelection, currentSelection?.candidateId, router]);
 
   const handleLeave = useCallback(() => {
     setShowLeaveModal(false);
@@ -90,10 +97,17 @@ function VotePageInner() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [selections]);
 
-  if (election.status === "closed") return <VotingClosedState />;
-  if (!election.eligible) return <NotEligibleState />;
-  if (election.hasVoted) return <AlreadyVotedState />;
-  if (election.positions.length === 0) {
+  if (loading) {
+    return (
+      <StudentLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </StudentLayout>
+    );
+  }
+
+  if (positions.length === 0) {
     return (
       <StudentLayout>
         <div className="max-w-7xl mx-auto w-full space-y-6">
@@ -113,7 +127,6 @@ function VotePageInner() {
     <>
     <StudentLayout>
         <div className="max-w-7xl mx-auto w-full space-y-6">
-          {/* Header */}
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <Badge variant="info" className="text-[10px]">Student Council Election 2026</Badge>
@@ -128,7 +141,6 @@ function VotePageInner() {
             </p>
           </div>
 
-          {/* Warning */}
           <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 border border-warning/20">
             <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
             <p className="text-xs text-warning font-medium">
@@ -136,31 +148,25 @@ function VotePageInner() {
             </p>
           </div>
 
-          {/* Progress */}
           <VotingProgress
             currentStep={0}
             totalSteps={3}
             steps={STEPS}
           />
 
-          {/* Election Info */}
-          <ElectionInfoCard election={election} />
-
-          {/* Position */}
           <Card className="border-border overflow-hidden">
-            {/* Position Header */}
             <div className="p-4 sm:p-5 border-b border-border bg-primary-50/50">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">
-                    Position {currentPosition + 1} of {election.positions.length}
+                    Position {currentPosition + 1} of {positions.length}
                   </span>
                   <h2 className="text-lg font-bold text-text-primary mt-1">
                     {currentPositionData.name}
                   </h2>
                 </div>
                 <Badge variant="info" className="text-[10px]">
-                  {currentPosition + 1} / {election.positions.length}
+                  {currentPosition + 1} / {positions.length}
                 </Badge>
               </div>
               <p className="text-xs text-text-secondary mt-2">
@@ -168,7 +174,6 @@ function VotePageInner() {
               </p>
             </div>
 
-            {/* Candidates */}
             <div className="p-4 sm:p-5 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {currentPositionData.candidates.map((candidate) => (
@@ -193,11 +198,10 @@ function VotePageInner() {
               )}
             </div>
 
-            {/* Navigation */}
             <div className="p-4 sm:p-5 border-t border-border">
               <VotingNavigation
                 currentStep={currentPosition}
-                totalSteps={election.positions.length}
+                totalSteps={positions.length}
                 hasSelection={
                   currentSelection?.candidateId !== undefined
                 }

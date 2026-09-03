@@ -1,31 +1,37 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StudentLayout } from "@/components/layout/StudentLayout";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { VotingProgress } from "@/components/voting/VotingProgress";
 import { BallotReview } from "@/components/voting/BallotReview";
 import { PrivacyNotice } from "@/components/voting/PrivacyNotice";
 import { ConfirmationModal } from "@/components/voting/ConfirmationModal";
 import { VotingProvider, useVoting } from "@/components/voting/VotingContext";
-import { MOCK_VOTING_ELECTION, type VotingElection } from "@/lib/election-voting-data";
 import { getApprovedCandidatesAsVotingPositions } from "@/lib/candidate-application-store";
+import type { VotingPosition } from "@/lib/election-voting-data";
 
 const STEPS = ["Select Candidates", "Review Ballot", "Confirm Vote"];
 
 function ReviewPageInner() {
   const router = useRouter();
-  const positions = getApprovedCandidatesAsVotingPositions();
-  const election: VotingElection = { ...MOCK_VOTING_ELECTION, positions };
   const { selections } = useVoting();
+  const [positions, setPositions] = useState<VotingPosition[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChangeSelection = (positionIndex: number) => {
+  useEffect(() => {
+    getApprovedCandidatesAsVotingPositions()
+      .then(setPositions)
+      .catch(() => setPositions([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleChangeSelection = () => {
     router.push(`/student/vote`);
   };
 
@@ -42,11 +48,20 @@ function ReviewPageInner() {
     }, 2000);
   };
 
+  if (loading) {
+    return (
+      <StudentLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </StudentLayout>
+    );
+  }
+
   return (
     <>
       <StudentLayout>
         <div className="max-w-7xl mx-auto w-full space-y-6">
-          {/* Header */}
           <div>
             <h1 className="text-2xl font-bold text-text-primary mb-1">Review Your Ballot</h1>
             <p className="text-sm text-text-secondary">
@@ -54,24 +69,20 @@ function ReviewPageInner() {
             </p>
           </div>
 
-          {/* Progress */}
           <VotingProgress
             currentStep={1}
             totalSteps={3}
             steps={STEPS}
           />
 
-          {/* Privacy Notice */}
           <PrivacyNotice />
 
-          {/* Ballot Review */}
           <BallotReview
-            positions={election.positions}
+            positions={positions}
             selections={selections}
             onChangeSelection={handleChangeSelection}
           />
 
-          {/* Confirmation */}
           <Card className="p-5 border-border">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
@@ -86,7 +97,6 @@ function ReviewPageInner() {
             </label>
           </Card>
 
-          {/* Submit */}
           <div className="flex gap-3">
             <Button
               variant="ghost"

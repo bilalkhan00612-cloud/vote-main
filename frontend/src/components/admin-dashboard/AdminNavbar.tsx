@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, Menu, Settings, Shield, User } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import NotificationBell from "@/components/ui/notification-bell";
-import { clearAuthCookie } from "@/lib/mock-auth";
+import { clearAuthCookie, getAuthCookie } from "@/lib/mock-auth";
 
 export interface AdminNavbarProps {
   onToggleMenu: () => void;
@@ -15,9 +15,15 @@ export interface AdminNavbarProps {
 export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onToggleMenu }) => {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [adminName, setAdminName] = useState("Admin");
+
+  useEffect(() => {
+    const auth = getAuthCookie();
+    if (auth?.name) setAdminName(auth.name);
+  }, []);
 
   return (
-    <header className="h-16 bg-white dark:bg-[#1C1F33] border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-[0_2px_8px_rgba(32,39,92,0.04)]">
+    <header className="h-16 bg-white dark:bg-[#252540] border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-[0_2px_8px_rgba(32,39,92,0.04)]">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleMenu}
@@ -27,11 +33,9 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onToggleMenu }) => {
           <Menu className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2 lg:hidden">
-          <div className="w-8 h-8 rounded-xl bg-primary-600 flex items-center justify-center font-bold text-white text-xs">
-            CV
-          </div>
+          <img src="/image/dbit logo.jpeg" alt="DBIT Logo" className="w-8 h-8 rounded-xl object-cover" />
           <span className="font-semibold text-text-primary text-sm tracking-wide">
-            Admin Panel
+            Don Bosco Institute of Technology
           </span>
         </div>
         <div className="hidden lg:flex items-center gap-2">
@@ -43,7 +47,6 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onToggleMenu }) => {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Notification Bell */}
         <NotificationBell />
 
         <div className="w-px h-6 bg-border" />
@@ -53,13 +56,13 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onToggleMenu }) => {
             onClick={() => setDropdownOpen((p) => !p)}
             className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-primary-50 transition-colors focus-ring cursor-pointer"
           >
-            <Avatar name="Election Admin" size="sm" />
+            <Avatar name={adminName} size="sm" />
             <div className="hidden sm:flex flex-col items-start">
               <span className="text-xs font-semibold text-text-primary leading-none">
-                Election Admin
+                {adminName}
               </span>
               <span className="text-[10px] text-text-muted font-semibold leading-none mt-0.5">
-                ADMIN-001
+                Administrator
               </span>
             </div>
             <ChevronDown className="w-4 h-4 text-text-muted" />
@@ -71,12 +74,12 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onToggleMenu }) => {
                 className="fixed inset-0 z-40"
                 onClick={() => setDropdownOpen(false)}
               />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1C1F33] rounded-xl border border-border shadow-lg z-50 py-1">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#252540] rounded-xl border border-border shadow-lg z-50 py-1">
                 <div className="px-4 py-3 border-b border-border">
                   <p className="text-sm font-semibold text-text-primary">
-                    Election Admin
+                    {adminName}
                   </p>
-                  <p className="text-xs text-text-muted">ADMIN-001</p>
+                  <p className="text-xs text-text-muted">Administrator</p>
                   <span className="inline-block mt-1 text-[10px] font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
                     Election Administrator
                   </span>

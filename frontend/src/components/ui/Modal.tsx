@@ -52,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         className={cn(
-          "w-full max-w-md bg-white dark:bg-[#1C1F33] rounded-2xl shadow-[0_20px_40px_rgba(32,39,92,0.2)] border border-border overflow-hidden flex flex-col transform transition-all duration-300 animate-slide-down",
+          "w-full max-w-md bg-white dark:bg-[#252540] rounded-2xl shadow-[0_20px_40px_rgba(32,39,92,0.2)] border border-border overflow-hidden flex flex-col transform transition-all duration-300 animate-slide-down",
           className
         )}
       >

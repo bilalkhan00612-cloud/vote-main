@@ -6,7 +6,7 @@ import { Home, ArrowLeft } from "lucide-react";
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-bg-tertiary flex items-center justify-center px-4">
-      <div className="bg-white dark:bg-[#1C1F33] rounded-[20px] border border-border p-10 max-w-md w-full text-center">
+      <div className="bg-white dark:bg-[#252540] rounded-[20px] border border-border p-10 max-w-md w-full text-center">
         <div className="w-16 h-16 bg-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-3xl">🔍</span>
         </div>

@@ -38,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, onNavigate }) => {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full bg-white dark:bg-[#1C1F33] border-r border-border shadow-[4px_0_20px_rgba(32,39,92,0.04)] w-68 shrink-0 rounded-r-2xl",
+        "flex flex-col h-full bg-white dark:bg-[#252540] border-r border-border shadow-[4px_0_20px_rgba(32,39,92,0.04)] w-68 shrink-0 rounded-r-2xl",
         className
       )}
     >

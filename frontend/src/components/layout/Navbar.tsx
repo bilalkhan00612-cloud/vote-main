@@ -42,7 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMenu, studentName }) => 
   ];
 
   return (
-    <header className="h-16 bg-white dark:bg-[#1C1F33] border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-[0_2px_8px_rgba(32,39,92,0.04)]">
+    <header className="h-16 bg-white dark:bg-[#252540] border-b border-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-[0_2px_8px_rgba(32,39,92,0.04)]">
       {/* Left side: Brand/Mobile toggle */}
       <div className="flex items-center gap-3">
         <button

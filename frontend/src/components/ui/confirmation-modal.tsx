@@ -15,7 +15,7 @@ export default function ConfirmationModal({ open, title, message, confirmLabel =
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onCancel}>
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative bg-white dark:bg-[#1C1F33] rounded-[16px] shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+      <div className="relative bg-white dark:bg-[#252540] rounded-[16px] shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
         <button onClick={onCancel} className="absolute top-3 right-3 p-1 hover:bg-bg-tertiary rounded-full">
           <X size={16} className="text-text-secondary" />
         </button>
@@ -42,7 +42,7 @@ export function SuccessModal({ open, title, message, onClose }: { open: boolean;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative bg-white dark:bg-[#1C1F33] rounded-[16px] shadow-xl w-full max-w-sm p-6 text-center" onClick={e => e.stopPropagation()}>
+      <div className="relative bg-white dark:bg-[#252540] rounded-[16px] shadow-xl w-full max-w-sm p-6 text-center" onClick={e => e.stopPropagation()}>
         <div className="w-12 h-12 bg-success-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl">✅</span>
         </div>
@@ -61,7 +61,7 @@ export function DangerConfirmationModal({ open, title, message, confirmLabel = "
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onCancel}>
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative bg-white dark:bg-[#1C1F33] rounded-[16px] shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+      <div className="relative bg-white dark:bg-[#252540] rounded-[16px] shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
         <button onClick={onCancel} className="absolute top-3 right-3 p-1 hover:bg-bg-tertiary rounded-full">
           <X size={16} className="text-text-secondary" />
         </button>
