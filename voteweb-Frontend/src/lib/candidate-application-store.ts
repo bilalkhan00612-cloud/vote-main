@@ -69,8 +69,7 @@ export async function getApprovedCandidatesAsCandidateList(): Promise<Candidate[
       name: app.name,
       position: app.position,
       photo: app.photo,
-      bio: app.bio,
-      manifesto: app.manifesto,
+      bio: app.bio || app.manifesto,
     }));
   } catch {
     return [];
@@ -83,30 +82,36 @@ export async function getApprovedCandidatesAsVotingPositions(): Promise<VotingPo
     const apps = all?.data || all || [];
 
     // Group by position
-    const positions: Record<string, VotingPosition> = {};
-
+    const byPosition: Record<string, any[]> = {};
     for (const app of apps) {
-      const posName = app.position || "General";
-      if (!positions[posName]) {
-        positions[posName] = {
-          id: posName.toLowerCase().replace(/\s+/g, "-"),
-          name: posName,
-          description: `${posName} candidates`,
-          candidates: [],
-          order: Object.keys(positions).length,
-        };
-      }
-
-      const candidate: VotingCandidate = {
-        id: app.id || app.studentId,
-        name: app.name,
-        bio: app.bio || app.manifesto,
-      };
-
-      positions[posName].candidates.push(candidate);
+      const pos = app.position || "General";
+      if (!byPosition[pos]) byPosition[pos] = [];
+      byPosition[pos].push(app);
     }
 
-    return Object.values(positions);
+    // Convert to VotingPosition format
+    const positions: VotingPosition[] = [];
+    let order = 1;
+    for (const [posName, candidates] of Object.entries(byPosition)) {
+      const votingCandidates: VotingCandidate[] = candidates.map((c: any) => ({
+        id: c.id || c.studentId,
+        name: c.name,
+        department: c.department || "",
+        year: c.year || "",
+        photoInitials: (c.name || "?").substring(0, 2).toUpperCase(),
+        campaignSymbol: "⭐",
+        shortManifesto: (c.manifesto || c.bio || "").substring(0, 100),
+      }));
+
+      positions.push({
+        id: `pos-${order}`,
+        name: posName,
+        order: order++,
+        candidates: votingCandidates,
+      });
+    }
+
+    return positions;
   } catch {
     return [];
   }
