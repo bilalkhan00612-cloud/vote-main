@@ -1,5 +1,7 @@
 import type { ApplicationStatus } from "./candidate-dashboard-data";
 import { candidateApi } from "./api/candidates";
+import type { Candidate } from "./candidate-data";
+import type { VotingPosition } from "./election-voting-data";
 
 export interface CandidateApplicationData {
   id: string;
@@ -34,6 +36,8 @@ export const DEPARTMENT_OPTIONS = ["BCA", "BBA", "BSc IT", "BSc CS", "B.Com", "B
 
 export const YEAR_OPTIONS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
 
+export const SECTION_OPTIONS = ["A", "B", "C", "D", "E", "F"];
+
 export async function getApplicationByEmail(email: string): Promise<CandidateApplicationData | undefined> {
   try {
     const all: any = await candidateApi.getAll();
@@ -51,6 +55,57 @@ export async function getAllApplications(): Promise<CandidateApplicationData[]> 
   try {
     const all: any = await candidateApi.getAll();
     return all?.data || all || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getApprovedCandidatesAsCandidateList(): Promise<Candidate[]> {
+  try {
+    const all: any = await candidateApi.getApproved();
+    const apps = all?.data || all || [];
+    return apps.map((app: any) => ({
+      id: app.id || app.studentId,
+      name: app.name,
+      position: app.position,
+      photo: app.photo,
+      bio: app.bio,
+      department: app.department,
+      enrollmentNumber: app.enrollmentNumber,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getApprovedCandidatesAsVotingPositions(): Promise<VotingPosition[]> {
+  try {
+    const all: any = await candidateApi.getApproved();
+    const apps = all?.data || all || [];
+
+    // Group by position
+    const positions: Record<string, VotingPosition> = {};
+
+    apps.forEach((app: any) => {
+      const pos = app.position;
+      if (!positions[pos]) {
+        positions[pos] = {
+          id: pos,
+          name: pos,
+          candidates: [],
+        };
+      }
+      positions[pos].candidates.push({
+        id: app.id || app.studentId,
+        name: app.name,
+        photo: app.photo,
+        bio: app.bio,
+        department: app.department,
+        enrollmentNumber: app.enrollmentNumber,
+      });
+    });
+
+    return Object.values(positions);
   } catch {
     return [];
   }
