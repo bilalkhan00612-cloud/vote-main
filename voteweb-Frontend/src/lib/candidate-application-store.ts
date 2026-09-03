@@ -1,7 +1,7 @@
 import type { ApplicationStatus } from "./candidate-dashboard-data";
 import { candidateApi } from "./api/candidates";
 import type { Candidate } from "./candidate-data";
-import type { VotingPosition } from "./election-voting-data";
+import type { VotingPosition, VotingCandidate } from "./election-voting-data";
 
 export interface CandidateApplicationData {
   id: string;
@@ -70,8 +70,7 @@ export async function getApprovedCandidatesAsCandidateList(): Promise<Candidate[
       position: app.position,
       photo: app.photo,
       bio: app.bio,
-      department: app.department,
-      enrollmentNumber: app.enrollmentNumber,
+      manifesto: app.manifesto,
     }));
   } catch {
     return [];
@@ -86,24 +85,26 @@ export async function getApprovedCandidatesAsVotingPositions(): Promise<VotingPo
     // Group by position
     const positions: Record<string, VotingPosition> = {};
 
-    apps.forEach((app: any) => {
-      const pos = app.position;
-      if (!positions[pos]) {
-        positions[pos] = {
-          id: pos,
-          name: pos,
+    for (const app of apps) {
+      const posName = app.position || "General";
+      if (!positions[posName]) {
+        positions[posName] = {
+          id: posName.toLowerCase().replace(/\s+/g, "-"),
+          name: posName,
+          description: `${posName} candidates`,
           candidates: [],
+          order: Object.keys(positions).length,
         };
       }
-      positions[pos].candidates.push({
+
+      const candidate: VotingCandidate = {
         id: app.id || app.studentId,
         name: app.name,
-        photo: app.photo,
-        bio: app.bio,
-        department: app.department,
-        enrollmentNumber: app.enrollmentNumber,
-      });
-    });
+        bio: app.bio || app.manifesto,
+      };
+
+      positions[posName].candidates.push(candidate);
+    }
 
     return Object.values(positions);
   } catch {
@@ -135,10 +136,9 @@ export async function updateApplicationStatus(
   status: ApplicationStatus,
   rejectionReason?: string
 ): Promise<CandidateApplicationData> {
-  const result: any = await candidateApi.updateStatus(id, { status, rejectionReason });
+  const result: any = await candidateApi.updateStatus(id, {
+    status,
+    reason: rejectionReason
+  });
   return result?.data || result;
-}
-
-export async function deleteApplication(id: string): Promise<void> {
-  await candidateApi.delete(id);
 }

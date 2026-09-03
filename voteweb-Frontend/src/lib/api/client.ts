@@ -24,7 +24,7 @@ class ApiClient {
         credentials: 'include'
       });
       const data = await res.json();
-      this.csrfToken = data.data?.csrfToken || '';
+      this.csrfToken = (data.data?.csrfToken as string) || '';
       return this.csrfToken;
     } catch (error) {
       console.error('Failed to get CSRF token:', error);

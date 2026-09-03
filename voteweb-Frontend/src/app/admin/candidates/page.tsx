@@ -96,7 +96,7 @@ export default function CandidateManagementPage() {
 
   const handleRequestChanges = async () => {
     if (!selectedCandidate || !changesText.trim()) return;
-    await updateApplicationStatus(selectedCandidate.id, "changes_requested", undefined, changesText.trim());
+    await updateApplicationStatus(selectedCandidate.id, "changes_requested", changesText.trim());
     showToast(`Changes requested for ${selectedCandidate.name}.`);
     closeReview();
     getAllApplications().then(setCandidates).catch(() => {});
